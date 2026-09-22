@@ -332,7 +332,7 @@ async function startLocalPlayback() {
 		localStream = await openStream();
 	} catch {
 		setStatus('offline', 'Camera blocked');
-		toast('Veet needs camera and microphone access');
+		toast('lcc-chat needs camera and microphone access');
 		return;
 	}
 	localStream.getTracks().forEach(watchTrack);
