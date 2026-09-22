@@ -4,7 +4,7 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 		<meta name="theme-color" content="#131417" />
-		<title>Veet</title>
+		<title>lcc-chat</title>
 		<link href="../images/favicon.ico" rel="icon" />
 		<link href="../shared/settings.css" rel="stylesheet" />
 		<link href="style.css" rel="stylesheet" />
@@ -14,8 +14,9 @@
 			<header class="topbar">
 				<a class="brand" href="/">
 					<img src="../images/veet.png" alt="" width="22" height="22" />
-					<span>Veet</span>
+					<span>lcc-chat</span>
 				</a>
+				<div class="call-context"><span>IN</span><strong id="call-context"># central-chat</strong></div>
 				<p class="status" id="status" data-state="connecting">
 					<span class="status-dot" aria-hidden="true"></span>
 					<span id="status-text">Connecting</span>
@@ -35,10 +36,10 @@
 
 			<aside class="chat" id="chat" aria-label="In-call messages">
 				<header class="chat-head">
-					<h2 class="chat-title">In-call messages</h2>
+					<h2 class="chat-title" id="chat-context"># central-chat</h2>
 					<button class="chat-close" id="chat-close" type="button" aria-label="Close chat"></button>
 				</header>
-				<p class="chat-note">Messages are sent peer-to-peer and disappear when you leave.</p>
+				<p class="chat-note">Keep the conversation going while you are in the call.</p>
 				<div class="chat-log" id="chat-log" role="log" aria-live="polite" tabindex="0">
 					<p class="chat-empty" id="chat-empty">No messages yet.</p>
 				</div>

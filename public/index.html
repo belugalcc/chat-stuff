@@ -1,110 +1,53 @@
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<meta name="theme-color" content="#ffffff" />
-		<meta name="description" content="Free peer-to-peer video calls. No sign-up, no downloads." />
-		<title>Veet — Free video calls for everyone</title>
-		<link href="images/favicon.ico" rel="icon" />
-		<link href="shared/settings.css" rel="stylesheet" />
-		<link href="style.css" rel="stylesheet" />
-	</head>
-	<body>
-		<header class="topbar">
-			<a class="brand" href="/">
-				<img src="images/veet.png" alt="" width="26" height="26" />
-				<span>Veet</span>
-			</a>
-		</header>
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<meta name="theme-color" content="#5865f2" />
+	<meta name="description" content="lcc-chat — a place to talk, message, and call together." />
+	<title>lcc-chat</title>
+	<link href="style.css" rel="stylesheet" />
+</head>
+<body>
+	<section class="onboarding" id="onboarding">
+		<div class="auth-card">
+			<div class="mark">lcc</div>
+			<p class="eyebrow" id="step-count">STEP 1 OF 3</p>
+			<h1 id="step-title">What is your username?</h1>
+			<p id="step-copy">This is how friends will find and direct message you.</p>
+			<form id="auth-form">
+				<label class="auth-step" data-step="1">Username<input id="username" maxlength="24" placeholder="your-name" required autocomplete="username" /></label>
+				<label class="auth-step" data-step="2" hidden>Display name<input id="display-name" maxlength="32" placeholder="How people will see you" required autocomplete="nickname" /></label>
+				<label class="auth-step" data-step="3" hidden>Password <span>optional</span><input id="password" type="password" placeholder="Leave blank for a one-time account" autocomplete="new-password" /></label>
+				<p class="temporary-note" id="temporary-note" hidden>A password-free account stays on this device until you sign out. After signing out, it cannot be recovered.</p>
+				<p class="auth-error" id="auth-error" role="alert"></p>
+				<div class="auth-actions"><button id="back-step" type="button" hidden>Back</button><button class="primary" id="next-step" type="submit">Next</button></div>
+			</form>
+		</div>
+	</section>
 
-		<main class="hero">
-			<h1>Free video calls for everyone</h1>
-			<p class="lede">From anywhere, connect, collaborate, and celebrate with Veet.</p>
-
-			<div class="actions">
-				<form id="new">
-					<button class="btn btn-primary" type="submit">
-						<span class="icon icon-add" aria-hidden="true"></span>
-						<span>New meeting</span>
-					</button>
-				</form>
-
-				<form id="join" novalidate>
-					<div class="field">
-						<span class="icon icon-link" aria-hidden="true"></span>
-						<input
-							id="meeting"
-							name="url"
-							type="text"
-							placeholder="Enter a meeting link"
-							autocomplete="off"
-							spellcheck="false"
-							aria-label="Meeting link"
-						/>
-					</div>
-					<button class="btn btn-ghost" type="submit">Join</button>
-				</form>
-			</div>
-
-			<p class="hint" id="hint" role="status" aria-live="polite"></p>
-
-			<button class="linkish" id="check-devices" type="button">
-				<span class="icon icon-settings" aria-hidden="true"></span>
-				<span>Set your name, camera, and mic</span>
-			</button>
-
-			<p class="note">Calls are peer-to-peer. Your video never touches a server.</p>
-		</main>
-
-		<script type="module">
-			import { createSettings } from '/shared/settings.js';
-
-			const joinForm = document.getElementById('join');
-			const newForm = document.getElementById('new');
-			const field = document.getElementById('meeting');
-			const hint = document.getElementById('hint');
-
-			const startCall = (id) => (window.location.href = `/call?i=${encodeURIComponent(id)}`);
-
-			// Accept a full meeting link or a bare id pasted on its own.
-			function parseMeeting(value) {
-				const raw = value.trim();
-				if (!raw) return null;
-				try {
-					return new URL(raw).searchParams.get('i');
-				} catch {
-					return /^[\w-]+$/.test(raw) ? raw : null;
-				}
-			}
-
-			function reject(message) {
-				hint.textContent = message;
-				field.setAttribute('aria-invalid', 'true');
-				field.focus();
-			}
-
-			newForm.addEventListener('submit', (e) => {
-				e.preventDefault();
-				startCall(crypto.randomUUID());
-			});
-
-			joinForm.addEventListener('submit', (e) => {
-				e.preventDefault();
-				const id = parseMeeting(field.value);
-				if (!id) return reject('That does not look like a Veet link. Paste the whole link you were sent.');
-				startCall(id);
-			});
-
-			field.addEventListener('input', () => {
-				hint.textContent = '';
-				field.removeAttribute('aria-invalid');
-			});
-
-			// No call to patch here, so the dialog runs its own preview stream and
-			// just remembers the picks for whenever a call does start.
-			const settings = createSettings();
-			document.getElementById('check-devices').addEventListener('click', () => settings.open());
-		</script>
-	</body>
+	<main class="app" id="app" hidden>
+		<aside class="rail"><div class="server active">lcc</div></aside>
+		<aside class="sidebar">
+			<div class="workspace"><strong>lcc-chat</strong><span>⌄</span></div>
+			<nav>
+				<button class="channel selected" data-channel="central"><span>#</span> central-chat</button>
+				<button class="channel" data-channel="call"><span>◉</span> central-call</button>
+			</nav>
+			<div class="direct-heading"><span>DIRECT MESSAGES</span><button id="new-dm" title="New direct message">+</button></div>
+			<form class="dm-form" id="dm-form" hidden><input id="dm-username" placeholder="Username to message" maxlength="24" /><button type="submit">Message</button></form>
+			<div class="dm-list" id="dm-list"></div>
+			<div class="profile"><div class="avatar" id="me-avatar"></div><div><strong id="me-name"></strong><small id="me-tag"></small></div><button id="logout" title="Sign out">↪</button></div>
+		</aside>
+		<section class="chat-shell">
+			<header class="chat-header"><div><span id="header-icon">#</span><strong id="channel-title">central-chat</strong><small id="channel-subtitle">Everyone in lcc-chat can talk here</small></div><div class="header-actions"><button id="admin-button" hidden>Admin</button><span id="online-count"></span></div></header>
+			<div class="messages" id="messages"></div>
+			<form class="composer" id="composer"><textarea id="message-input" placeholder="Message #central-chat" rows="1" maxlength="2000"></textarea><button class="primary" type="submit">Send</button></form>
+		</section>
+		<aside class="members"><h2>ONLINE — <span id="member-count">0</span></h2><div id="member-list"></div></aside>
+	</main>
+	<dialog id="admin-dialog"><form method="dialog" class="admin-card"><button class="close" value="close">×</button><p class="eyebrow">ADMIN CONSOLE</p><h2>lcc-chat overview</h2><p id="admin-summary"></p><div id="account-list"></div><hr><label>Change a user password<input id="admin-user" placeholder="username" /></label><label>New password<input id="admin-password" type="password" /></label><button class="primary" id="update-password" value="default">Update password</button></form></dialog>
+	<div class="toast" id="toast"></div>
+	<script type="module" src="app.js"></script>
+</body>
 </html>

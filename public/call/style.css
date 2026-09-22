@@ -907,3 +907,4 @@ body.chat-open .chat {
 		transition-duration: 0.01ms !important;
 	}
 }
+.call-context{display:flex;align-items:center;gap:7px;margin-left:auto;color:var(--muted);font-size:.78rem}.call-context span{font-size:.62rem;font-weight:700;letter-spacing:.09em;color:#9fa8ff}.call-context strong{color:var(--text)}.chat-head{border-bottom-color:#45414f}.chat-title{color:#cbd0ff}.chat-send{background-color:#6975f5}.chat-send:hover{background-color:#7f8aff}.controls{border-top-color:#343342}
