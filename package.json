@@ -1,23 +1,7 @@
 {
-	"name": "veet",
-	"version": "0.0.0",
-	"private": true,
-	"scripts": {
-		"dev": "wrangler dev",
-		"start": "wrangler dev",
-		"deploy": "wrangler deploy"
-	},
-	"devDependencies": {
-		"wrangler": "^4.114.0"
-	},
-	"cloudflare": {
-		"bindings": {
-			"TURN_KEY_ID": {
-				"description": "**Optional.** TURN key ID from the [Cloudflare Realtime dashboard](https://dash.cloudflare.com/?to=/:account/calls). Leave blank to run on STUN only — fine on most home networks, but calls will fail behind symmetric NAT or a strict firewall."
-			},
-			"TURN_KEY_API_TOKEN": {
-				"description": "**Optional.** The API token issued alongside `TURN_KEY_ID`. Leave blank to run on STUN only."
-			}
-		}
-	}
+  "name": "lcc-chat",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": { "dev": "wrangler dev", "start": "wrangler dev", "deploy": "wrangler deploy", "check": "wrangler deploy --dry-run" },
+  "devDependencies": { "wrangler": "^4.114.0" }
 }
