@@ -1,6 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
 
-const TEMP_ACCOUNT_TTL = 24 * 60 * 60 * 1000;
 const MAX_MESSAGES = 400;
 const ADMIN_USERNAME = 'lcc-chat';
 const ADMIN_PASSWORD = 'lcc-chat';
@@ -28,24 +27,14 @@ export class LccChat extends DurableObject {
 		const saved = await this.ctx.storage.get(['accounts', 'messages']);
 		for (const account of saved.get('accounts') || []) this.accounts.set(account.username, account);
 		this.messages = saved.get('messages') || [];
-		await this.purgeTemporaryAccounts();
+		if (!this.accounts.has(ADMIN_USERNAME)) this.accounts.set(ADMIN_USERNAME, { username: ADMIN_USERNAME, displayName: 'lcc-chat', passwordHash: await digest(ADMIN_PASSWORD), admin: true, temporary: false, tokens: [] });
+		await this.save();
 	}
 
 	async save() {
 		await this.ctx.storage.put({ accounts: [...this.accounts.values()], messages: this.messages });
 	}
 
-	async purgeTemporaryAccounts() {
-		const now = Date.now();
-		let changed = false;
-		for (const [username, account] of this.accounts) {
-			if (account.temporary && account.expiresAt <= now) {
-				this.accounts.delete(username);
-				changed = true;
-			}
-		}
-		if (changed) await this.save();
-	}
 
 	async fetch() {
 		await this.ready;
@@ -62,12 +51,14 @@ export class LccChat extends DurableObject {
 		let message;
 		try { message = JSON.parse(raw); } catch { return; }
 		if (message.type === 'auth') return this.authenticate(ws, message);
+		if (message.type === 'resume') return this.resume(ws, message);
 		const session = this.sessions.get(ws);
 		if (!session) return this.send(ws, { type: 'error', message: 'Sign in first.' });
 		if (message.type === 'message') return this.createMessage(ws, session, message);
 		if (message.type === 'delete-message') return this.deleteMessage(ws, session, message);
 		if (message.type === 'change-password') return this.changePassword(ws, session, message);
 		if (message.type === 'admin-overview') return this.adminOverview(ws, session);
+		if (message.type === 'signout') return this.signout(ws, session);
 	}
 
 	async authenticate(ws, message) {
@@ -77,28 +68,57 @@ export class LccChat extends DurableObject {
 		if (username.length < 2) return this.send(ws, { type: 'error', message: 'Choose a username with at least 2 letters or numbers.' });
 		if (username === ADMIN_USERNAME) {
 			if (password !== ADMIN_PASSWORD) return this.send(ws, { type: 'error', message: 'That username or password is not correct.' });
-			return this.beginSession(ws, { username, displayName: 'lcc-chat', admin: true, temporary: false });
+			const admin = this.accounts.get(ADMIN_USERNAME);
+			return this.beginSession(ws, admin, await this.createSessionToken(admin));
 		}
-		await this.purgeTemporaryAccounts();
 		const account = this.accounts.get(username);
 		if (account) {
+			if (account.temporary) return this.send(ws, { type: 'error', message: 'Temporary accounts cannot be signed into again after signing out.' });
 			if (account.passwordHash !== (password ? await digest(password) : '')) return this.send(ws, { type: 'error', message: 'That username or password is not correct.' });
 			account.displayName = displayName;
 			this.accounts.set(username, account);
 			await this.save();
-			return this.beginSession(ws, account);
+			return this.beginSession(ws, account, await this.createSessionToken(account));
 		}
 		const temporary = !password;
-		const newAccount = { username, displayName, passwordHash: temporary ? '' : await digest(password), temporary, expiresAt: temporary ? Date.now() + TEMP_ACCOUNT_TTL : null };
+		const newAccount = { username, displayName, passwordHash: temporary ? '' : await digest(password), temporary, tokens: [] };
 		this.accounts.set(username, newAccount);
 		await this.save();
-		return this.beginSession(ws, newAccount);
+		return this.beginSession(ws, newAccount, await this.createSessionToken(newAccount));
 	}
 
-	beginSession(ws, account) {
-		const session = { username: account.username, displayName: account.displayName, admin: Boolean(account.admin), temporary: account.temporary };
+	async createSessionToken(account) {
+		const token = crypto.randomUUID();
+		account.tokens = [...(account.tokens || []), token].slice(-8);
+		this.accounts.set(account.username, account);
+		await this.save();
+		return token;
+	}
+
+	resume(ws, message) {
+		const token = String(message.token || '');
+		for (const account of this.accounts.values()) {
+			if ((account.tokens || []).includes(token)) return this.beginSession(ws, account, token);
+		}
+		this.send(ws, { type: 'signed-out' });
+	}
+
+	async signout(ws, session) {
+		const account = this.accounts.get(session.username);
+		if (account) {
+			account.tokens = (account.tokens || []).filter((token) => token !== session.token);
+			this.accounts.set(account.username, account);
+			await this.save();
+		}
+		this.sessions.set(ws, null);
+		this.send(ws, { type: 'signed-out' });
+		this.broadcast({ type: 'presence', users: this.onlineUsers() });
+	}
+
+	beginSession(ws, account, token = '') {
+		const session = { username: account.username, displayName: account.displayName, admin: Boolean(account.admin), temporary: account.temporary, token };
 		this.sessions.set(ws, session);
-		this.send(ws, { type: 'authenticated', user: session, messages: this.visibleMessages(session), users: this.onlineUsers() });
+		this.send(ws, { type: 'authenticated', user: session, token, messages: this.visibleMessages(session), users: this.onlineUsers() });
 		this.broadcast({ type: 'presence', users: this.onlineUsers() });
 	}
 

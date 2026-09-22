@@ -12,16 +12,16 @@
 	<section class="onboarding" id="onboarding">
 		<div class="auth-card">
 			<div class="mark">lcc</div>
-			<p class="eyebrow">WELCOME TO</p>
-			<h1>lcc-chat</h1>
-			<p>Choose a name and join the conversation. Add a password to keep your account.</p>
+			<p class="eyebrow" id="step-count">STEP 1 OF 3</p>
+			<h1 id="step-title">What is your username?</h1>
+			<p id="step-copy">This is how friends will find and direct message you.</p>
 			<form id="auth-form">
-				<label>Display name<input id="display-name" maxlength="32" placeholder="How people will see you" required autocomplete="nickname" /></label>
-				<label>Username<input id="username" maxlength="24" placeholder="your-name" required autocomplete="username" /></label>
-				<label>Password <span>optional</span><input id="password" type="password" placeholder="Leave blank for a temporary account" autocomplete="new-password" /></label>
-				<p class="temporary-note">Password-free accounts are automatically removed after 24 hours.</p>
+				<label class="auth-step" data-step="1">Username<input id="username" maxlength="24" placeholder="your-name" required autocomplete="username" /></label>
+				<label class="auth-step" data-step="2" hidden>Display name<input id="display-name" maxlength="32" placeholder="How people will see you" required autocomplete="nickname" /></label>
+				<label class="auth-step" data-step="3" hidden>Password <span>optional</span><input id="password" type="password" placeholder="Leave blank for a one-time account" autocomplete="new-password" /></label>
+				<p class="temporary-note" id="temporary-note" hidden>A password-free account stays on this device until you sign out. After signing out, it cannot be recovered.</p>
 				<p class="auth-error" id="auth-error" role="alert"></p>
-				<button class="primary" type="submit">Enter lcc-chat</button>
+				<div class="auth-actions"><button id="back-step" type="button" hidden>Back</button><button class="primary" id="next-step" type="submit">Next</button></div>
 			</form>
 		</div>
 	</section>
