@@ -12,6 +12,11 @@ const copyLabel = document.getElementById('copy-label');
 const audioBtn = document.getElementById('audio-ctl');
 const videoBtn = document.getElementById('video-ctl');
 const endCallBtn = document.getElementById('endcall');
+const callParams = new URLSearchParams(location.search);
+const callContext = callParams.get('chat') === 'dm' ? `Direct messages with @${callParams.get('user') || 'member'}` : '# central-chat';
+document.getElementById('call-context').textContent = callContext;
+document.getElementById('chat-context').textContent = callContext;
+document.title = `${callContext} · lcc-chat`;
 
 // Signalling runs on the same Worker that served this page, so the origin is
 // whatever we were loaded from — no environment switching needed.
@@ -22,6 +27,8 @@ const wsUrl = (id) => `${location.protocol == 'https:' ? 'wss:' : 'ws:'}//${loca
 let iceConfig;
 
 let ws;
+let chatWs;
+let chatUsername = '';
 let myId;
 let localStream;
 let guestCount = 0;
@@ -34,6 +41,16 @@ const signal = (data) => ws?.readyState == WebSocket.OPEN && ws.send(JSON.string
 
 // Built up front so an early data channel always has somewhere to render.
 const chat = createChat({ onSend: sendChat });
+const chatProtocol = location.protocol == 'https:' ? 'wss:' : 'ws:';
+const chatRoom = callParams.get('chat') === 'dm' ? 'dm' : 'central';
+const chatRecipient = callParams.get('user') || '';
+function connectRoomChat() {
+	const token = localStorage.getItem('lcc-chat-session');
+	if (!token) return;
+	chatWs = new WebSocket(`${chatProtocol}//${location.host}/api/ws`);
+	chatWs.onopen = () => chatWs.send(JSON.stringify({ type: 'resume', token }));
+	chatWs.onmessage = (event) => { const message = JSON.parse(event.data); if (message.type === 'authenticated') { chatUsername = message.user.username; message.messages.filter((item) => item.channel === chatRoom && (chatRoom !== 'dm' || item.sender === chatRecipient || item.recipient === chatRecipient)).forEach((item) => chat.append({ name: item.senderName, text: item.text || (item.attachment?.name || 'Shared a file'), mine: item.sender === message.user.username, at: item.createdAt })); } if (message.type === 'message' && message.message.channel === chatRoom && (chatRoom !== 'dm' || message.message.sender === chatRecipient || message.message.recipient === chatRecipient)) chat.append({ name: message.message.senderName, text: message.message.text || (message.message.attachment?.name || 'Shared a file'), mine: message.message.sender === chatUsername, at: message.message.createdAt }); };
+}
 
 /* ---------------------------------------------------------------- tiles -- */
 
@@ -219,10 +236,11 @@ async function handleMessages(e) {
 		case 'ready':
 			myId = msg.id;
 			await Promise.all(msg.peers.map(dial));
-			describeRoom();
+			setStatus(msg.peers.length ? 'live' : 'waiting', `${msg.peers.length + 1} in call`);
 			break;
 		case 'joined':
-			break; //they dial us; nothing to do until their offer lands
+			setStatus('live', 'Someone is joining');
+			break;
 		case 'offer':
 			await onOffer(msg.from, msg.offer);
 			break;
@@ -238,6 +256,9 @@ async function handleMessages(e) {
 			break;
 		case 'name':
 			setTileName(msg.from, msg.name);
+			break;
+		case 'room':
+			setStatus(msg.count > 1 ? 'live' : 'waiting', `${msg.count} in call`);
 			break;
 		case 'left':
 			dropPeer(msg.from);
@@ -289,24 +310,13 @@ function bindChat(id, channel) {
 }
 
 function sendChat(text) {
-	if (!peers.size) return toast('No one else is here yet');
-
+	if (chatWs?.readyState === WebSocket.OPEN) return chatWs.send(JSON.stringify({ type: 'message', channel: chatRoom, recipient: chatRecipient, text }));
+	if (!peers.size) return toast('Sign in to use chat, or wait for another caller');
 	const payload = JSON.stringify({ text });
-	let delivered = 0;
-	for (const { chat: channel } of peers.values()) {
-		if (channel?.readyState != 'open') continue;
-		try {
-			channel.send(payload);
-			delivered += 1;
-		} catch {
-			//channel died between the check and the send
-		}
-	}
-
+	for (const { chat: channel } of peers.values()) if (channel?.readyState === 'open') channel.send(payload);
 	chat.append({ name: 'You', text, mine: true });
-	if (!delivered) toast('Still connecting — message not delivered');
-	else if (delivered < peers.size) toast(`Delivered to ${delivered} of ${peers.size}`);
 }
+
 
 /* ----------------------------------------------------------------- boot -- */
 
@@ -314,12 +324,14 @@ function sendChat(text) {
 	const id = new URLSearchParams(location.search).get('i');
 	if (!id) return void (location.href = '/');
 
+	document.getElementById('invite')?.remove();
 	addTile('self', { self: true });
 	setTileName('self', myName);
 	await startLocalPlayback();
 
 	iceConfig = await fetch('/ice').then((r) => r.json());
 
+	connectRoomChat();
 	ws = new WebSocket(wsUrl(id));
 	ws.onmessage = handleMessages;
 	ws.onopen = () => describeRoom();
@@ -332,7 +344,7 @@ async function startLocalPlayback() {
 		localStream = await openStream();
 	} catch {
 		setStatus('offline', 'Camera blocked');
-		toast('Veet needs camera and microphone access');
+		toast('lcc-chat needs camera and microphone access');
 		return;
 	}
 	localStream.getTracks().forEach(watchTrack);

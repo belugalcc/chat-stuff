@@ -209,7 +209,7 @@ export function createSettings(host = {}) {
 			if (!host.liveStream?.()) ownStream = await openStream();
 			bindPreview();
 		} catch {
-			fail('Veet needs camera and microphone access to list your devices.');
+			fail('lcc-chat needs camera and microphone access to list your devices.');
 		}
 
 		await refresh();
