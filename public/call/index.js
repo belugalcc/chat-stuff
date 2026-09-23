@@ -12,6 +12,11 @@ const copyLabel = document.getElementById('copy-label');
 const audioBtn = document.getElementById('audio-ctl');
 const videoBtn = document.getElementById('video-ctl');
 const endCallBtn = document.getElementById('endcall');
+const callParams = new URLSearchParams(location.search);
+const callContext = callParams.get('chat') === 'dm' ? `Direct messages with @${callParams.get('user') || 'member'}` : '# central-chat';
+document.getElementById('call-context').textContent = callContext;
+document.getElementById('chat-context').textContent = callContext;
+document.title = `${callContext} · lcc-chat`;
 
 // Signalling runs on the same Worker that served this page, so the origin is
 // whatever we were loaded from — no environment switching needed.
@@ -314,6 +319,7 @@ function sendChat(text) {
 	const id = new URLSearchParams(location.search).get('i');
 	if (!id) return void (location.href = '/');
 
+	document.getElementById('invite')?.remove();
 	addTile('self', { self: true });
 	setTileName('self', myName);
 	await startLocalPlayback();
@@ -332,7 +338,7 @@ async function startLocalPlayback() {
 		localStream = await openStream();
 	} catch {
 		setStatus('offline', 'Camera blocked');
-		toast('Veet needs camera and microphone access');
+		toast('lcc-chat needs camera and microphone access');
 		return;
 	}
 	localStream.getTracks().forEach(watchTrack);
