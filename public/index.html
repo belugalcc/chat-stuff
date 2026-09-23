@@ -42,7 +42,7 @@
 		<section class="chat-shell">
 			<header class="chat-header"><div><span id="header-icon">#</span><strong id="channel-title">central-chat</strong><small id="channel-subtitle">Everyone in lcc-chat can talk here</small></div><div class="header-actions"><a class="call-dm" id="call-dm" hidden>Call</a><button id="admin-button" hidden>Admin</button></div></header>
 			<div class="messages" id="messages"></div>
-			<form class="composer" id="composer"><textarea id="message-input" placeholder="Message #central-chat" rows="1" maxlength="2000"></textarea><button class="primary" type="submit">Send</button></form>
+			<form class="composer" id="composer"><label class="attach" title="Share a file">＋<input id="file-input" type="file" hidden /></label><textarea id="message-input" placeholder="Message #central-chat" rows="1" maxlength="2000"></textarea><button class="primary" type="submit">Send</button></form>
 		</section>
 	</main>
 	<dialog id="admin-dialog"><form method="dialog" class="admin-card"><button class="close" value="close">×</button><p class="eyebrow">ADMIN CONSOLE</p><h2>lcc-chat overview</h2><p id="admin-summary"></p><div id="account-list"></div><hr><label>Change a user password<input id="admin-user" placeholder="username" /></label><label>New password<input id="admin-password" type="password" /></label><button class="primary" id="update-password" value="default">Update password</button></form></dialog>

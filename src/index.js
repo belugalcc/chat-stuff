@@ -59,6 +59,7 @@ export class LccChat extends DurableObject {
 		if (message.type === 'change-password') return this.changePassword(ws, session, message);
 		if (message.type === 'admin-overview') return this.adminOverview(ws, session);
 		if (message.type === 'signout') return this.signout(ws, session);
+		if (message.type === 'call-invite') return this.callInvite(ws, session, message);
 	}
 
 	async authenticate(ws, message) {
@@ -128,14 +129,23 @@ export class LccChat extends DurableObject {
 
 	async createMessage(ws, session, incoming) {
 		const text = safeText(incoming.text);
+		const attachment = typeof incoming.attachment === 'object' && typeof incoming.attachment.data === 'string' && incoming.attachment.data.startsWith('data:') && incoming.attachment.data.length <= 1500000 ? { name: safeText(incoming.attachment.name).slice(0, 120), type: safeText(incoming.attachment.type).slice(0, 100), data: incoming.attachment.data } : null;
 		const target = incoming.channel === 'dm' ? normalizeUsername(incoming.recipient) : null;
-		if (!text) return;
+		if (!text && !attachment) return;
 		if (incoming.channel === 'dm' && (!target || target === session.username)) return this.send(ws, { type: 'error', message: 'Enter another valid username to send a direct message.' });
-		const message = { id: crypto.randomUUID(), channel: target ? 'dm' : 'central', recipient: target, sender: session.username, senderName: session.displayName, text, createdAt: Date.now() };
+		const message = { id: crypto.randomUUID(), channel: target ? 'dm' : 'central', recipient: target, sender: session.username, senderName: session.displayName, text, attachment, createdAt: Date.now() };
 		this.messages.push(message);
 		this.messages = this.messages.slice(-MAX_MESSAGES);
 		await this.save();
 		this.broadcastMessage(message);
+	}
+
+
+	callInvite(ws, session, incoming) {
+		const recipient = normalizeUsername(incoming.recipient);
+		if (!recipient || recipient === session.username) return;
+		const room = safeText(incoming.room).slice(0, 80);
+		for (const [peer, target] of this.sessions) if (target?.username === recipient) this.send(peer, { type: 'call-invite', from: session.username, fromName: session.displayName, room });
 	}
 
 	async deleteMessage(ws, session, incoming) {
@@ -201,6 +211,7 @@ export class CentralCall extends DurableObject {
 		this.sessions.set(server, { id });
 		server.send(JSON.stringify({ type: 'ready', id, peers }));
 		this.relay({ type: 'joined', from: id }, id);
+		this.relay({ type: 'room', count: this.sessions.size }, null);
 		return new Response(null, { status: 101, webSocket: pair[0] });
 	}
 	webSocketMessage(ws, raw) {
@@ -209,7 +220,7 @@ export class CentralCall extends DurableObject {
 		try { const message = JSON.parse(raw); this.relay({ ...message, from: session.id }, session.id, message.to); } catch {}
 	}
 	relay(message, from, to) { for (const [ws, session] of this.sessions) if (session.id !== from && (!to || session.id === to)) try { ws.send(JSON.stringify(message)); } catch {} }
-	webSocketClose(ws) { const session = this.sessions.get(ws); if (!session) return; this.sessions.delete(ws); this.relay({ type: 'left', from: session.id }, session.id); }
+	webSocketClose(ws) { const session = this.sessions.get(ws); if (!session) return; this.sessions.delete(ws); this.relay({ type: 'left', from: session.id }, session.id); this.relay({ type: 'room', count: this.sessions.size }, null); }
 	webSocketError(ws) { this.webSocketClose(ws); }
 }
 
