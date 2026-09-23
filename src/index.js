@@ -18,6 +18,7 @@ export class LccChat extends DurableObject {
 	constructor(ctx, env) {
 		super(ctx, env);
 		this.sessions = new Map();
+		for (const ws of this.ctx.getWebSockets()) this.sessions.set(ws, ws.deserializeAttachment());
 		this.accounts = new Map();
 		this.messages = [];
 		this.ready = this.restore();
@@ -41,6 +42,7 @@ export class LccChat extends DurableObject {
 		const pair = new WebSocketPair();
 		const server = pair[1];
 		this.ctx.acceptWebSocket(server);
+		server.serializeAttachment(null);
 		this.sessions.set(server, null);
 		server.send(JSON.stringify({ type: 'welcome' }));
 		return new Response(null, { status: 101, webSocket: pair[0] });
@@ -111,6 +113,7 @@ export class LccChat extends DurableObject {
 			this.accounts.set(account.username, account);
 			await this.save();
 		}
+		ws.serializeAttachment(null);
 		this.sessions.set(ws, null);
 		this.send(ws, { type: 'signed-out' });
 		this.broadcast({ type: 'presence', users: this.onlineUsers() });
@@ -118,6 +121,7 @@ export class LccChat extends DurableObject {
 
 	beginSession(ws, account, token = '') {
 		const session = { username: account.username, displayName: account.displayName, admin: Boolean(account.admin), temporary: account.temporary, token };
+		ws.serializeAttachment(session);
 		this.sessions.set(ws, session);
 		this.send(ws, { type: 'authenticated', user: session, token, messages: this.visibleMessages(session), directory: this.directory() });
 		this.broadcast({ type: 'presence', users: this.onlineUsers() });
@@ -201,13 +205,18 @@ export class LccChat extends DurableObject {
 
 
 export class CentralCall extends DurableObject {
-	constructor(ctx, env) { super(ctx, env); this.sessions = new Map(); }
+	constructor(ctx, env) {
+		super(ctx, env);
+		this.sessions = new Map();
+		for (const ws of this.ctx.getWebSockets()) this.sessions.set(ws, ws.deserializeAttachment());
+	}
 	fetch() {
 		const pair = new WebSocketPair();
 		const server = pair[1];
 		this.ctx.acceptWebSocket(server);
 		const id = crypto.randomUUID();
 		const peers = [...this.sessions.values()].map((session) => session.id);
+		server.serializeAttachment({ id });
 		this.sessions.set(server, { id });
 		server.send(JSON.stringify({ type: 'ready', id, peers }));
 		this.relay({ type: 'joined', from: id }, id);
