@@ -118,7 +118,7 @@ export class LccChat extends DurableObject {
 	beginSession(ws, account, token = '') {
 		const session = { username: account.username, displayName: account.displayName, admin: Boolean(account.admin), temporary: account.temporary, token };
 		this.sessions.set(ws, session);
-		this.send(ws, { type: 'authenticated', user: session, token, messages: this.visibleMessages(session), users: this.onlineUsers() });
+		this.send(ws, { type: 'authenticated', user: session, token, messages: this.visibleMessages(session), directory: this.directory() });
 		this.broadcast({ type: 'presence', users: this.onlineUsers() });
 	}
 
@@ -165,6 +165,10 @@ export class LccChat extends DurableObject {
 	adminOverview(ws, session) {
 		if (!session.admin) return;
 		this.send(ws, { type: 'admin-overview', accounts: [...this.accounts.values()].map(({ username, displayName, temporary, expiresAt }) => ({ username, displayName, temporary, expiresAt })), messages: this.messages.length });
+	}
+
+	directory() {
+		return [...this.accounts.values()].filter((account) => !account.admin).map(({ username, displayName }) => ({ username, displayName })).sort((a, b) => a.displayName.localeCompare(b.displayName));
 	}
 
 	onlineUsers() {

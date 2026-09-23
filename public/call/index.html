@@ -1,111 +1,39 @@
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<meta name="theme-color" content="#131417" />
-		<title>lcc-chat</title>
-		<link href="../images/favicon.ico" rel="icon" />
-		<link href="../shared/settings.css" rel="stylesheet" />
-		<link href="style.css" rel="stylesheet" />
-	</head>
-	<body>
-		<div class="app">
-			<header class="topbar">
-				<a class="brand" href="/">
-					<img src="../images/veet.png" alt="" width="22" height="22" />
-					<span>lcc-chat</span>
-				</a>
-				<div class="call-context"><span>IN</span><strong id="call-context"># central-chat</strong></div>
-				<p class="status" id="status" data-state="connecting">
-					<span class="status-dot" aria-hidden="true"></span>
-					<span id="status-text">Connecting</span>
-				</p>
-			</header>
-
-			<main class="stage" id="stage" data-count="1" data-layout="solo">
-				<section class="invite" id="invite">
-					<h1 class="invite-title">Ready when you are</h1>
-					<p class="invite-sub">Share this link to bring someone into the call.</p>
-					<button class="invite-copy" id="copy-link" type="button">
-						<span class="icon" aria-hidden="true"></span>
-						<span id="copy-label">Copy meeting link</span>
-					</button>
-				</section>
-			</main>
-
-			<aside class="chat" id="chat" aria-label="In-call messages">
-				<header class="chat-head">
-					<h2 class="chat-title" id="chat-context"># central-chat</h2>
-					<button class="chat-close" id="chat-close" type="button" aria-label="Close chat"></button>
-				</header>
-				<p class="chat-note">Keep the conversation going while you are in the call.</p>
-				<div class="chat-log" id="chat-log" role="log" aria-live="polite" tabindex="0">
-					<p class="chat-empty" id="chat-empty">No messages yet.</p>
-				</div>
-				<form class="chat-form" id="chat-form">
-					<textarea
-						class="chat-input"
-						id="chat-input"
-						rows="1"
-						placeholder="Send a message"
-						aria-label="Message"
-						autocomplete="off"
-					></textarea>
-					<button class="chat-send" type="submit" aria-label="Send message">
-						<span class="icon" aria-hidden="true"></span>
-					</button>
-				</form>
-			</aside>
-
-			<footer class="controls">
-				<button class="ctl" id="audio-ctl" type="button" aria-pressed="false">
-					<span class="icon" aria-hidden="true"></span>
-					<span class="sr-only">Mute microphone</span>
-					<span class="tip" aria-hidden="true">Mute</span>
-				</button>
-				<button class="ctl" id="video-ctl" type="button" aria-pressed="false">
-					<span class="icon" aria-hidden="true"></span>
-					<span class="sr-only">Turn off camera</span>
-					<span class="tip" aria-hidden="true">Camera off</span>
-				</button>
-				<button class="ctl ctl-link" id="share-ctl" type="button">
-					<span class="icon" aria-hidden="true"></span>
-					<span class="sr-only">Copy meeting link</span>
-					<span class="tip" aria-hidden="true">Copy link</span>
-				</button>
-				<button class="ctl" id="chat-ctl" type="button" aria-expanded="false" aria-controls="chat">
-					<span class="icon" aria-hidden="true"></span>
-					<span class="ctl-badge" id="chat-unread" hidden></span>
-					<span class="sr-only">Toggle chat</span>
-					<span class="tip" aria-hidden="true">Chat</span>
-				</button>
-				<button class="ctl" id="settings-ctl" type="button">
-					<span class="icon" aria-hidden="true"></span>
-					<span class="sr-only">Open settings</span>
-					<span class="tip" aria-hidden="true">Settings</span>
-				</button>
-				<button class="ctl ctl-end" id="endcall" type="button">
-					<span class="icon" aria-hidden="true"></span>
-					<span class="sr-only">Leave call</span>
-					<span class="tip" aria-hidden="true">Leave</span>
-				</button>
-			</footer>
-		</div>
-
-		<div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-		<template id="tile-template">
-			<div class="tile">
-				<video class="tile-video" autoplay playsinline></video>
-				<div class="tile-placeholder"><span class="tile-initial"></span></div>
-				<div class="tile-meta">
-					<span class="tile-badge" data-muted hidden><span class="icon" aria-hidden="true"></span></span>
-					<span class="tile-name"></span>
-				</div>
-			</div>
-		</template>
-
-		<script type="module" src="index.js"></script>
-	</body>
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<meta name="theme-color" content="#171724" />
+	<title>lcc-chat call</title>
+	<link href="../shared/settings.css" rel="stylesheet" />
+	<link href="style.css" rel="stylesheet" />
+</head>
+<body>
+	<div class="call-app">
+		<header class="call-header">
+			<a class="brand" href="/"><span class="brand-mark">lcc</span><span>lcc-chat</span></a>
+			<div class="context"><span>CALLING</span><strong id="call-context"># central-chat</strong></div>
+			<p class="status" id="status" data-state="connecting"><i></i><span id="status-text">Connecting</span></p>
+		</header>
+		<main class="stage" id="stage" data-count="1" data-layout="solo">
+			<section class="invite" id="invite"><div class="invite-icon">◉</div><h1>Ready to connect?</h1><p>Share this private call link to invite someone in.</p><button id="copy-link" type="button"><span id="copy-label">Copy call link</span></button></section>
+		</main>
+		<aside class="chat" id="chat" aria-label="Call chat">
+			<header class="chat-head"><div><small>CONVERSATION</small><h2 id="chat-context"># central-chat</h2></div><button class="chat-close" id="chat-close" type="button" aria-label="Close chat">×</button></header>
+			<div class="chat-log" id="chat-log" role="log" aria-live="polite" tabindex="0"><p class="chat-empty" id="chat-empty">No call messages yet.</p></div>
+			<form class="chat-form" id="chat-form"><textarea class="chat-input" id="chat-input" rows="1" placeholder="Message this call" aria-label="Message"></textarea><button class="chat-send" type="submit" aria-label="Send message">↑</button></form>
+		</aside>
+		<footer class="controls">
+			<button class="ctl" id="audio-ctl" type="button" aria-pressed="false"><span>◉</span><b>Mic</b></button>
+			<button class="ctl" id="video-ctl" type="button" aria-pressed="false"><span>▣</span><b>Camera</b></button>
+			<button class="ctl" id="share-ctl" type="button"><span>↗</span><b>Invite</b></button>
+			<button class="ctl" id="chat-ctl" type="button" aria-expanded="false" aria-controls="chat"><span>☵</span><b>Chat</b><i class="ctl-badge" id="chat-unread" hidden></i></button>
+			<button class="ctl" id="settings-ctl" type="button"><span>⚙</span><b>Settings</b></button>
+			<button class="ctl ctl-end" id="endcall" type="button"><span>☎</span><b>Leave</b></button>
+		</footer>
+	</div>
+	<div class="toast" id="toast" role="status" aria-live="polite"></div>
+	<template id="tile-template"><div class="tile"><video class="tile-video" autoplay playsinline></video><div class="tile-placeholder"><span class="tile-initial"></span></div><div class="tile-meta"><span class="tile-badge" data-muted hidden>Muted</span><span class="tile-name"></span></div></div></template>
+	<script type="module" src="index.js"></script>
+</body>
 </html>

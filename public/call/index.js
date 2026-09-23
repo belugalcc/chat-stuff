@@ -319,6 +319,7 @@ function sendChat(text) {
 	const id = new URLSearchParams(location.search).get('i');
 	if (!id) return void (location.href = '/');
 
+	document.getElementById('invite')?.remove();
 	addTile('self', { self: true });
 	setTileName('self', myName);
 	await startLocalPlayback();

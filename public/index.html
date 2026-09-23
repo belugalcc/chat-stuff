@@ -35,16 +35,15 @@
 				<button class="channel" data-channel="call"><span>◉</span> central-call</button>
 			</nav>
 			<div class="direct-heading"><span>DIRECT MESSAGES</span><button id="new-dm" title="New direct message">+</button></div>
-			<form class="dm-form" id="dm-form" hidden><input id="dm-username" placeholder="Username to message" maxlength="24" /><button type="submit">Message</button></form>
+			<form class="dm-form" id="dm-form" hidden><select id="dm-username" aria-label="Choose a person"></select><button type="submit">Message</button></form>
 			<div class="dm-list" id="dm-list"></div>
 			<div class="profile"><div class="avatar" id="me-avatar"></div><div><strong id="me-name"></strong><small id="me-tag"></small></div><button id="logout" title="Sign out">↪</button></div>
 		</aside>
 		<section class="chat-shell">
-			<header class="chat-header"><div><span id="header-icon">#</span><strong id="channel-title">central-chat</strong><small id="channel-subtitle">Everyone in lcc-chat can talk here</small></div><div class="header-actions"><button id="admin-button" hidden>Admin</button><span id="online-count"></span></div></header>
+			<header class="chat-header"><div><span id="header-icon">#</span><strong id="channel-title">central-chat</strong><small id="channel-subtitle">Everyone in lcc-chat can talk here</small></div><div class="header-actions"><a class="call-dm" id="call-dm" hidden>Call</a><button id="admin-button" hidden>Admin</button></div></header>
 			<div class="messages" id="messages"></div>
 			<form class="composer" id="composer"><textarea id="message-input" placeholder="Message #central-chat" rows="1" maxlength="2000"></textarea><button class="primary" type="submit">Send</button></form>
 		</section>
-		<aside class="members"><h2>ONLINE — <span id="member-count">0</span></h2><div id="member-list"></div></aside>
 	</main>
 	<dialog id="admin-dialog"><form method="dialog" class="admin-card"><button class="close" value="close">×</button><p class="eyebrow">ADMIN CONSOLE</p><h2>lcc-chat overview</h2><p id="admin-summary"></p><div id="account-list"></div><hr><label>Change a user password<input id="admin-user" placeholder="username" /></label><label>New password<input id="admin-password" type="password" /></label><button class="primary" id="update-password" value="default">Update password</button></form></dialog>
 	<div class="toast" id="toast"></div>
